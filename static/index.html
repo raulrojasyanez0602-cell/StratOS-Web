@@ -1,0 +1,168 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>stratOS | Terminal Cuantitativa</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://cdn.plot.ly/plotly-2.27.0.min.js"></script>
+    <link rel="stylesheet" href="/static/style.css">
+    <style>
+        .typing { overflow: hidden; white-space: pre-wrap; border-right: 2px solid #56CCF2; animation: blink 1s step-end infinite; }
+        @keyframes blink { 50% { border-color: transparent; } }
+        .glow { box-shadow: 0 0 15px rgba(47, 128, 237, 0.5); border-color: #2F80ED; }
+    </style>
+</head>
+<body class="bg-[#071426] text-[#EAF2F8] h-screen flex overflow-hidden">
+
+    <!-- Sidebar -->
+    <aside class="w-64 bg-[#0B1F38] border-r border-[#163A63] flex flex-col hidden md:flex">
+        <div class="p-6 border-b border-[#163A63]">
+            <h1 class="text-2xl font-bold text-white tracking-widest">strat<span class="text-[#56CCF2]">OS</span></h1>
+            <p class="text-xs text-[#91A4B7] mt-1">Quantitative System</p>
+        </div>
+        <nav class="flex-1 p-4 space-y-2">
+            <button onclick="showSection('resumen', this)" class="nav-btn w-full text-left bg-[#163A63] text-[#56CCF2] px-4 py-3 rounded-lg font-semibold transition">Resumen</button>
+            <button onclick="showSection('bots', this)" class="nav-btn w-full text-left text-[#91A4B7] hover:bg-[#0B1F38] hover:text-white px-4 py-3 rounded-lg transition">Bots</button>
+            <button onclick="showSection('operaciones', this)" class="nav-btn w-full text-left text-[#91A4B7] hover:bg-[#0B1F38] hover:text-white px-4 py-3 rounded-lg transition">Operaciones</button>
+            <button onclick="showSection('riesgo', this)" class="nav-btn w-full text-left text-[#91A4B7] hover:bg-[#0B1F38] hover:text-white px-4 py-3 rounded-lg transition">Riesgo</button>
+            <button onclick="showSection('boardroom', this)" class="nav-btn w-full text-left text-[#91A4B7] hover:bg-[#0B1F38] hover:text-white px-4 py-3 rounded-lg transition">🧪 R&D Lab</button>
+        </nav>
+        <div class="p-4 border-t border-[#163A63] text-xs text-[#91A4B7] text-center">
+            <div class="flex items-center justify-center space-x-2">
+                <div class="w-2 h-2 bg-[#27AE60] rounded-full animate-pulse"></div>
+                <span>Sistema Operativo</span>
+            </div>
+            <p class="mt-2">stratOS v2.6</p>
+        </div>
+    </aside>
+
+    <main class="flex-1 overflow-y-auto p-8 relative">
+        <!-- SECCIÓN 1: RESUMEN -->
+        <section id="section-resumen" class="block">
+            <header class="flex justify-between items-center mb-6">
+                <div><h2 class="text-2xl font-semibold text-white">Command Center</h2><p class="text-sm text-[#91A4B7]">Estado general y métricas institucionales.</p></div>
+                <div class="bg-[#0B1F38] border border-[#163A63] px-4 py-2 rounded-lg text-sm"><span class="text-[#91A4B7]">Actualizado:</span><span id="last-update" class="text-white ml-2">Cargando...</span></div>
+            </header>
+            <div class="grid grid-cols-1 md:grid-cols-4 gap-4 mb-4">
+                <div class="bg-[#0B1F38] border border-[#163A63] p-4 rounded-xl shadow-lg"><p class="text-[#91A4B7] text-xs mb-1 uppercase">Balance Total</p><h3 class="text-2xl font-bold text-white" id="kpi-balance">$0.00</h3></div>
+                <div class="bg-[#0B1F38] border border-[#163A63] p-4 rounded-xl shadow-lg"><p class="text-[#91A4B7] text-xs mb-1 uppercase">PnL Total</p><h3 class="text-2xl font-bold text-[#27AE60]" id="kpi-pnl">$0.00</h3></div>
+                <div class="bg-[#0B1F38] border border-[#163A63] p-4 rounded-xl shadow-lg"><p class="text-[#91A4B7] text-xs mb-1 uppercase">Win Rate</p><h3 class="text-2xl font-bold text-white" id="kpi-winrate">0.00%</h3></div>
+                <div class="bg-[#0B1F38] border border-[#163A63] p-4 rounded-xl shadow-lg"><p class="text-[#91A4B7] text-xs mb-1 uppercase">Profit Factor</p><h3 class="text-2xl font-bold text-white" id="kpi-pf">0.00</h3></div>
+            </div>
+            <div class="grid grid-cols-1 md:grid-cols-4 gap-4 mb-6">
+                <div class="bg-[#0B1F38] border border-[#163A63] p-4 rounded-xl shadow-lg border-l-4 border-l-[#2F80ED]"><p class="text-[#91A4B7] text-xs mb-1 uppercase">Sharpe</p><h3 class="text-xl font-bold text-white" id="kpi-sharpe">0.00</h3></div>
+                <div class="bg-[#0B1F38] border border-[#163A63] p-4 rounded-xl shadow-lg border-l-4 border-l-[#56CCF2]"><p class="text-[#91A4B7] text-xs mb-1 uppercase">Sortino</p><h3 class="text-xl font-bold text-white" id="kpi-sortino">0.00</h3></div>
+                <div class="bg-[#0B1F38] border border-[#163A63] p-4 rounded-xl shadow-lg border-l-4 border-l-[#27AE60]"><p class="text-[#91A4B7] text-xs mb-1 uppercase">Expectancy</p><h3 class="text-xl font-bold text-white" id="kpi-expectancy">$0.00</h3></div>
+                <div class="bg-[#0B1F38] border border-[#163A63] p-4 rounded-xl shadow-lg border-l-4 border-l-[#F2C94C]"><p class="text-[#91A4B7] text-xs mb-1 uppercase">Reserva 20%</p><h3 class="text-xl font-bold text-[#F2C94C]" id="kpi-reserva">$0.00</h3></div>
+            </div>
+            <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
+                <div class="md:col-span-2 bg-[#0B1F38] border border-[#163A63] p-5 rounded-xl shadow-lg"><h3 class="text-white font-semibold mb-4 text-sm">Evolución del Balance</h3><div id="chart-equity" class="w-full h-64"></div></div>
+                <div class="bg-[#0B1F38] border border-[#163A63] p-5 rounded-xl shadow-lg flex flex-col"><h3 class="text-white font-semibold mb-4 text-sm">Estado de los Bots</h3><div class="space-y-3 flex-1 overflow-y-auto" id="bot-list-short"></div></div>
+            </div>
+        </section>
+
+        <!-- SECCIÓN 2: BOTS -->
+        <section id="section-bots" class="hidden"><h2 class="text-2xl font-semibold text-white mb-6">Bot Intelligence</h2><div id="bots-grid" class="grid grid-cols-1 md:grid-cols-2 gap-6"></div></section>
+
+        <!-- SECCIÓN 3: OPERACIONES -->
+        <section id="section-operaciones" class="hidden">
+            <h2 class="text-2xl font-semibold text-white mb-6">Operaciones</h2>
+            <div class="bg-[#0B1F38] border border-[#163A63] rounded-xl overflow-hidden">
+                <table class="w-full text-left text-sm text-[#91A4B7]"><thead class="bg-[#163A63] text-white uppercase text-xs"><tr><th class="px-6 py-3">Fecha</th><th class="px-6 py-3">Bot</th><th class="px-6 py-3">PnL</th></tr></thead><tbody id="trades-tbody"></tbody></table>
+            </div>
+        </section>
+
+        <!-- SECCIÓN 4: RIESGO -->
+        <section id="section-riesgo" class="hidden"><h2 class="text-2xl font-semibold text-white mb-6">Risk Monitor</h2><div class="bg-[#0B1F38] border border-[#163A63] p-5 rounded-xl shadow-lg"><div id="chart-risk" class="w-full h-64"></div></div></section>
+
+        <!-- SECCIÓN 5: R&D LAB (BOARDROOM) -->
+        <section id="section-boardroom" class="hidden">
+            <header class="mb-6 flex justify-between items-center">
+                <div><h2 class="text-2xl font-semibold text-white">R&D Boardroom</h2><p class="text-sm text-[#91A4B7]">Investigación autónoma de IAs.</p></div>
+                <div class="flex gap-2">
+                    <input id="agent-order" type="text" placeholder="Ej: Investigar Momentum en SOL" class="w-64 bg-[#0B1F38] border border-[#163A63] rounded-lg px-4 py-2 text-white focus:outline-none">
+                    <button onclick="runAgents()" id="btn-agent-run" class="bg-[#2F80ED] hover:bg-[#56CCF2] text-white px-6 py-2 rounded-lg font-bold transition">Ejecutar</button>
+                </div>
+            </header>
+            <div class="grid grid-cols-1 md:grid-cols-5 gap-4">
+                <div id="card-investigador" class="bg-[#0B1F38] border border-[#163A63] p-4 rounded-xl h-72 overflow-hidden transition-all duration-300"><h3 class="text-[#56CCF2] text-sm font-bold mb-2">🕵️ 1. Investigador</h3><div id="log-investigador" class="text-xs text-[#91A4B7] font-mono h-full overflow-y-auto">Esperando...</div></div>
+                <div id="card-sintetizador" class="bg-[#0B1F38] border border-[#163A63] p-4 rounded-xl h-72 overflow-hidden transition-all duration-300"><h3 class="text-[#56CCF2] text-sm font-bold mb-2">🧠 2. Sintetizador</h3><div id="log-sintetizador" class="text-xs text-[#91A4B7] font-mono h-full overflow-y-auto">Esperando...</div></div>
+                <div id="card-developer" class="bg-[#0B1F38] border border-[#163A63] p-4 rounded-xl h-72 overflow-hidden transition-all duration-300"><h3 class="text-[#56CCF2] text-sm font-bold mb-2">💻 3. Developer</h3><div id="log-developer" class="text-xs text-[#91A4B7] font-mono h-full overflow-y-auto">Esperando...</div></div>
+                <div id="card-auditor" class="bg-[#0B1F38] border border-[#163A63] p-4 rounded-xl h-72 overflow-hidden transition-all duration-300"><h3 class="text-[#56CCF2] text-sm font-bold mb-2">🛡️ 4. Auditor</h3><div id="log-auditor" class="text-xs text-[#91A4B7] font-mono h-full overflow-y-auto">Esperando...</div></div>
+                <div id="card-telemetria" class="bg-[#0B1F38] border border-[#163A63] p-4 rounded-xl h-72 overflow-hidden transition-all duration-300"><h3 class="text-[#56CCF2] text-sm font-bold mb-2">📡 5. Telemetría</h3><div id="log-telemetria" class="text-xs text-[#91A4B7] font-mono h-full overflow-y-auto">Esperando...</div></div>
+            </div>
+        </section>
+    </main>
+
+    <script>
+        // NAVEGACIÓN
+        function showSection(sectionId, btn) {
+            document.querySelectorAll('main > section').forEach(sec => sec.classList.add('hidden'));
+            document.getElementById('section-' + sectionId).classList.remove('hidden');
+            document.querySelectorAll('.nav-btn').forEach(b => { b.classList.remove('bg-[#163A63]', 'text-[#56CCF2]', 'font-semibold'); b.classList.add('text-[#91A4B7]'); });
+            btn.classList.remove('text-[#91A4B7]');
+            btn.classList.add('bg-[#163A63]', 'text-[#56CCF2]', 'font-semibold');
+        }
+
+        // CARGA DE DATOS (TRADING)
+        window.onload = function() {
+            fetch('/api/metrics').then(res=>res.json()).then(data => {
+                const set = (id, txt) => { const el = document.getElementById(id); if(el) el.innerText = txt; };
+                set('kpi-balance', `$${data.balance.toLocaleString()}`); set('kpi-pnl', `$${data.pnl.toLocaleString()}`); set('kpi-winrate', `${data.win_rate}%`); set('kpi-pf', data.profit_factor); set('kpi-sharpe', data.sharpe); set('kpi-sortino', data.sortino); set('kpi-expectancy', `$${data.expectancy}`); set('kpi-reserva', `$${data.reserva}`); set('last-update', data.last_update);
+                
+                const layout = { paper_bgcolor: 'rgba(0,0,0,0)', plot_bgcolor: 'rgba(0,0,0,0)', font: { color: '#91A4B7', family: 'Inter' }, margin: { t: 20, b: 30, l: 40, r: 20 }, xaxis: { gridcolor: '#163A63' }, yaxis: { gridcolor: '#163A63' } };
+                if(document.getElementById('chart-equity')) Plotly.newPlot('chart-equity', [{ x: data.dates, y: data.equity, type: 'scatter', mode: 'lines+area', fill: 'tozeroy', line: { color: '#2F80ED', width: 2 }, fillcolor: 'rgba(47, 128, 237, 0.1)' }], layout, {displayModeBar: false});
+            });
+
+            fetch('/api/trades').then(res=>res.json()).then(data => {
+                const tbody = document.getElementById('trades-tbody');
+                if(!tbody) return;
+                if(data.data.length === 0) { tbody.innerHTML = '<tr><td colspan="3" class="text-center py-4">Sin trades aún</td></tr>'; return; }
+                data.data.forEach(t => { tbody.innerHTML += `<tr class="border-b border-[#163A63]"><td class="px-6 py-4">${t.timestamp}</td><td class="px-6 py-4 text-white">${t.bot_id}</td><td class="px-6 py-4">$${t.pnl_neto}</td></tr>`; });
+            });
+        }
+
+        // LÓGICA BOARDROOM (AGENTES)
+        async function runAgents() {
+            const btn = document.getElementById('btn-agent-run');
+            const order = document.getElementById('agent-order').value || "Investigar patron de volumen";
+            btn.innerText = "Procesando...";
+            btn.disabled = true;
+
+            await fetch('/api/agents/run', { method: 'POST', headers: {'Content-Type': 'application/json'}, body: JSON.stringify({ prompt: order }) });
+
+            const interval = setInterval(async () => {
+                const res = await fetch('/api/agents/status');
+                const data = await res.json();
+                
+                ['investigador', 'sintetizador', 'developer', 'auditor', 'telemetria'].forEach(agent => {
+                    const card = document.getElementById(`card-${agent}`);
+                    const log = document.getElementById(`log-${agent}`);
+                    if (data[agent].status === "Working") {
+                        card.classList.add('glow');
+                        if (log.innerText !== data[agent].log && !log.dataset.typing) {
+                            log.dataset.typing = "true";
+                            log.innerText = "";
+                            let i = 0;
+                            const typing = setInterval(() => {
+                                log.innerText += data[agent].log.charAt(i);
+                                i++;
+                                if (i >= data[agent].log.length) { clearInterval(typing); delete log.dataset.typing; }
+                            }, 15);
+                        }
+                    } else {
+                        card.classList.remove('glow');
+                    }
+                });
+
+                if (data.telemetria.log.includes("Mision cumplida")) {
+                    clearInterval(interval);
+                    btn.innerText = "✅ Completado";
+                    btn.classList.replace('bg-[#2F80ED]', 'bg-[#27AE60]');
+                }
+            }, 1000);
+        }
+    </script>
+</body>
+</html>
