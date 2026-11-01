@@ -54,27 +54,43 @@ class CierrePayload(BaseModel):
 # ============================================================================
 # RUTAS DE LA WEB Y MÉTRICAS
 # ============================================================================
-@app.get("/")
-def read_index():
-    return FileResponse("static/index.html")
-
 @app.get("/api/metrics")
 def get_metrics():
+    # 1. Definimos la lista maestra de tus 4 bots
+    ALL_BOTS = ["Bot 01", "Bot 02", "Bot 03", "Bot 04"]
+    
     client = get_db()
+    # 2. Traemos los trades y calculamos el PnL individual por bot
     res_trades = client.execute("SELECT pnl_neto, duracion_min FROM trades WHERE estado = 'CERRADO'")
+    res_bots = client.execute("SELECT bot_id, SUM(pnl_neto) FROM trades WHERE estado = 'CERRADO' GROUP BY bot_id")
+    
     rows = res_trades.rows
+    # Convertimos el resultado de bots en un diccionario: {"Bot 01": 15.5, "Bot 02": -2.0}
+    bot_pnls = {r[0]: r[1] for r in res_bots.rows}
     client.close()
 
+    # 3. Construimos la lista de bots para el frontend SIEMPRE con los 4
+    bots_para_frontend = []
+    for b in ALL_BOTS:
+        # Si el bot no ha operado, su pnl será 0.0
+        bots_para_frontend.append({
+            "name": b,
+            "status": "Activo",
+            "pnl": round(bot_pnls.get(b, 0.0), 2)
+        })
+
+    # 4. Manejo de caso vacío (Sin trades)
     if not rows:
         return {
             "balance": CAPITAL_INICIAL, "pnl": 0.0, "win_rate": 0.0, "profit_factor": 0.0,
             "sharpe": 0.0, "sortino": 0.0, "expectancy": 0.0, "reserva": CAPITAL_INICIAL * RESERVA_PCT,
             "capital_operativo": CAPITAL_INICIAL * (1-RESERVA_PCT), "duracion_prom": 0,
             "equity": [CAPITAL_INICIAL]*7, "dates": ["D1", "D2", "D3", "D4", "D5", "D6", "Hoy"],
-            "bots": [{"name": "Bot 01 - BTC", "status": "Activo", "pnl": 0.0}, {"name": "Bot 02 - ETH", "status": "Activo", "pnl": 0.0}],
+            "bots": bots_para_frontend, # <-- AQUÍ YA ENVIAMOS LOS 4
             "last_update": datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S UTC")
         }
 
+    # 5. Cálculos matemáticos (Tu código original)
     pnls = [r[0] for r in rows]
     duraciones = [r[1] for r in rows if r[1] is not None]
     total_tr = len(pnls)
@@ -107,18 +123,9 @@ def get_metrics():
         "capital_operativo": round(balance - reserva_usd, 2),
         "duracion_prom": round(np.mean(duraciones), 1) if duraciones else 0,
         "equity": eq_curve[-7:], "dates": ["T-6", "T-5", "T-4", "T-3", "T-2", "T-1", "Hoy"],
-        "bots": [{"name": "Bot 01", "status": "Activo", "pnl": 0.0}],
+        "bots": bots_para_frontend, # <-- AQUÍ ENVIAMOS LOS 4
         "last_update": datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S UTC")
     }
-
-@app.get("/api/trades")
-def get_trades():
-    client = get_db()
-    res = client.execute("SELECT trade_id, timestamp_entrada, bot_id, accion, simbolo, precio_entrada, precio_salida, pnl_neto, estado FROM trades ORDER BY timestamp_entrada DESC LIMIT 20")
-    client.close()
-    trades = [{"trade_id": r[0], "timestamp": r[1], "bot_id": r[2], "accion": r[3], "simbolo": r[4], "precio_entrada": r[5], "precio_salida": r[6], "pnl_neto": r[7], "estado": r[8]} for r in res.rows]
-    return {"success": True, "data": trades}
-
 # ============================================================================
 # RUTAS PARA LOS BOTS (ENTRADA Y CIERRE)
 # ============================================================================
