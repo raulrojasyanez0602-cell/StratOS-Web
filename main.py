@@ -146,31 +146,40 @@ def get_agent_status():
 async def run_agents(order: AgentOrder):
     orden_ceo = order.prompt
     
-    # Agente 1
+    MODEL_FAST = "meta-llama/llama-3-8b-instruct:free"
+    MODEL_CODE = "mistralai/mistral-7b-instruct:free"
+
+    def llamar_llm(prompt, model):
+        try:
+            res = ai_client.chat.completions.create(model=model, messages=[{"role": "user", "content": prompt}], temperature=0.2)
+            return res.choices[0].message.content
+        except Exception as e:
+            return f"Error: {e}"
+
+    # Agente 1: Investigador
     estado_agentes["investigador"] = {"status": "Working", "log": "Analizando mercado..."}
-    await asyncio.sleep(2)
-    estado_agentes["investigador"]["log"] = f"Variables identificadas para: {orden_ceo}. (Usando RSI, Volumen)"
+    log1 = llamar_llm(f"Orden: '{orden_ceo}'. Propón 3 variables cuantitativas (ej. RSI, Volumen). Sin código.", MODEL_FAST)
+    estado_agentes["investigador"]["log"] = log1
 
-    # Agente 2
+    # Agente 2: Sintetizador
     estado_agentes["sintetizador"] = {"status": "Working", "log": "Creando hipotesis..."}
-    await asyncio.sleep(2)
-    estado_agentes["sintetizador"]["log"] = "Hipotesis: Entrar LONG si RSI < 30 y Volumen > Media."
+    log2 = llamar_llm(f"Basado en: {log1}\nCrea una regla booleana exacta para señales de compra.", MODEL_FAST)
+    estado_agentes["sintetizador"]["log"] = log2
 
-    # Agente 3
+    # Agente 3: Developer (AQUI ESTA EL CODIGO)
     estado_agentes["developer"] = {"status": "Working", "log": "Escribiendo codigo Python..."}
-    await asyncio.sleep(2)
-    estado_agentes["developer"]["log"] = "def calcular_senales(df, params):\n  rsi = ta.rsi(df['close'], 14)\n  return rsi < 30"
+    log3 = llamar_llm(f"Escribe solo la función calcular_senales(df, params) en Pandas para esta regla: {log2}. Usa .shift(1).", MODEL_CODE)
+    codigo_limpio = log3.replace("```python", "").replace("```", "")
+    estado_agentes["developer"]["log"] = codigo_limpio
 
-    # Agente 4
+    # Agente 4: Auditor
     estado_agentes["auditor"] = {"status": "Working", "log": "Auditando codigo..."}
-    await asyncio.sleep(2)
-    estado_agentes["auditor"]["log"] = "✅ APROBADO: No hay look-ahead bias."
+    log4 = llamar_llm(f"Revisa este código: {log3}\nResponde '✅ APROBADO' o '❌ RECHAZADO' y por qué.", MODEL_CODE)
+    estado_agentes["auditor"]["log"] = log4
 
-    # Agente 5
+    # Agente 5: Telemetria
     estado_agentes["telemetria"] = {"status": "Working", "log": "Enviando reporte..."}
-    await asyncio.sleep(2)
+    await asyncio.sleep(1)
     estado_agentes["telemetria"]["log"] = "✅ Mision cumplida."
 
     return {"success": True}
-
-# (Aqui irian las rutas de /api/entrada y /api/cierre que ya tenias...)
