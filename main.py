@@ -183,3 +183,48 @@ async def run_agents(order: AgentOrder):
     estado_agentes["telemetria"]["log"] = "✅ Mision cumplida."
 
     return {"success": True}
+# ============================================================================
+# RUTAS DE OPERACIONES (TRADING)
+# ============================================================================
+@app.get("/api/trades")
+def get_trades():
+    client = get_db()
+    res = client.execute("SELECT trade_id, timestamp_entrada, bot_id, accion, simbolo, precio_entrada, precio_salida, pnl_neto, estado FROM trades ORDER BY timestamp_entrada DESC LIMIT 20")
+    client.close()
+    trades = [{"trade_id": r[0], "timestamp": r[1], "bot_id": r[2], "accion": r[3], "simbolo": r[4], "precio_entrada": r[5], "precio_salida": r[6], "pnl_neto": r[7], "estado": r[8]} for r in res.rows]
+    return {"success": True, "data": trades}
+
+@app.post("/api/entrada")
+def registrar_entrada(payload: EntradaPayload):
+    client = get_db()
+    res_sym = client.execute("SELECT COUNT(*) FROM active_positions WHERE simbolo = ?", [payload.symbol])
+    if res_sym.rows[0][0] >= 1:
+        client.close()
+        return {"success": False, "error": "symbol_cap"}
+    trade_id = f"{payload.bot_id}-{int(datetime.datetime.now().timestamp() * 1000)}"
+    now_str = datetime.datetime.utcnow().strftime("%Y-%m-%d %H:%M:%S")
+    res_pnl = client.execute("SELECT SUM(pnl_neto) FROM trades WHERE estado = 'CERRADO'")
+    pnl_acum = res_pnl.rows[0][0] or 0.0
+    nocional = round((CAPITAL_INICIAL + pnl_acum) * 0.30, 2)
+    client.execute('''INSERT INTO trades (trade_id, timestamp_entrada, bot_id, accion, simbolo, precio_entrada, nocional, pnl_neto, estado, bar_close_time, execution_type) VALUES (?, ?, ?, ?, ?, ?, ?, 0.0, 'ABIERTO', ?, 'PENDING')''', [trade_id, now_str, payload.bot_id, payload.action, payload.symbol, payload.price, nocional, payload.bar_close_time])
+    client.execute('''INSERT INTO active_positions (trade_id, bot_id, simbolo, timeframe, tipo, entry_price, tp_price, sl_price, bar_close_time) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)''', [trade_id, payload.bot_id, payload.symbol, payload.timeframe, payload.action, payload.price, payload.tp_price, payload.sl_price, payload.bar_close_time])
+    client.close()
+    return {"success": True, "data": trade_id}
+
+@app.post("/api/cierre")
+def registrar_cierre(payload: CierrePayload):
+    client = get_db()
+    res_trade = client.execute("SELECT accion, precio_entrada, nocional, timestamp_entrada FROM trades WHERE trade_id = ?", [payload.trade_id])
+    trade = res_trade.rows[0] if res_trade.rows else None
+    if not trade:
+        client.close()
+        return {"success": False, "error": "trade_not_found"}
+    accion, precio_entrada, nocional, ts_entrada = trade
+    pnl_bruto = nocional * (payload.exit_price - precio_entrada) / precio_entrada if accion == "LONG" else nocional * (precio_entrada - payload.exit_price) / precio_entrada
+    pnl_neto = round(pnl_bruto - (nocional * COMISION_PCT), 2)
+    entrada_dt = datetime.datetime.strptime(ts_entrada, "%Y-%m-%d %H:%M:%S")
+    duracion = int((datetime.datetime.utcnow() - entrada_dt).total_seconds() / 60)
+    client.execute('''UPDATE trades SET precio_salida = ?, pnl_neto = ?, estado = 'CERRADO', duracion_min = ?, execution_type = ? WHERE trade_id = ?''', [payload.exit_price, pnl_neto, duracion, payload.exec_type, payload.trade_id])
+    client.execute("DELETE FROM active_positions WHERE trade_id = ?", [payload.trade_id])
+    client.close()
+    return {"success": True, "data": pnl_neto}
