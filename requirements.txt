@@ -2,4 +2,3 @@ fastapi
 uvicorn
 libsql-client
 numpy
-openai

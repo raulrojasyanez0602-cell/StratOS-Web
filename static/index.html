@@ -3,17 +3,10 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>stratOS | Terminal Cuantitativa</title>
+    <title>stratOS | Trading Dashboard</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://cdn.plot.ly/plotly-2.27.0.min.js"></script>
-    <!-- PHASER.JS (Motor de Videojuegos) -->
-    <script src="https://cdn.jsdelivr.net/npm/phaser@3.60.0/dist/phaser.min.js"></script>
     <link rel="stylesheet" href="/static/style.css">
-    <style>
-        #game-container { width: 100%; height: 450px; border-radius: 12px; overflow: hidden; background: #0B1F38; }
-        .glow { box-shadow: 0 0 15px rgba(47, 128, 237, 0.5); border-color: #2F80ED; }
-        .code-console { background: #000; color: #00ff00; font-family: monospace; padding: 10px; border-radius: 8px; height: 450px; overflow-y: auto; font-size: 12px;}
-    </style>
 </head>
 <body class="bg-[#071426] text-[#EAF2F8] h-screen flex overflow-hidden">
 
@@ -21,88 +14,76 @@
     <aside class="w-64 bg-[#0B1F38] border-r border-[#163A63] flex flex-col hidden md:flex">
         <div class="p-6 border-b border-[#163A63]">
             <h1 class="text-2xl font-bold text-white tracking-widest">strat<span class="text-[#56CCF2]">OS</span></h1>
-            <p class="text-xs text-[#91A4B7] mt-1">Quantitative System</p>
+            <p class="text-xs text-[#91A4B7] mt-1">Trading System</p>
         </div>
         <nav class="flex-1 p-4 space-y-2">
             <button onclick="showSection('resumen', this)" class="nav-btn w-full text-left bg-[#163A63] text-[#56CCF2] px-4 py-3 rounded-lg font-semibold transition">Resumen</button>
-            <button onclick="showSection('bots', this)" class="nav-btn w-full text-left text-[#91A4B7] hover:bg-[#0B1F38] hover:text-white px-4 py-3 rounded-lg transition">Bots</button>
             <button onclick="showSection('operaciones', this)" class="nav-btn w-full text-left text-[#91A4B7] hover:bg-[#0B1F38] hover:text-white px-4 py-3 rounded-lg transition">Operaciones</button>
-            <button onclick="showSection('riesgo', this)" class="nav-btn w-full text-left text-[#91A4B7] hover:bg-[#0B1F38] hover:text-white px-4 py-3 rounded-lg transition">Riesgo</button>
-            <button onclick="showSection('boardroom', this)" class="nav-btn w-full text-left text-[#91A4B7] hover:bg-[#0B1F38] hover:text-white px-4 py-3 rounded-lg transition">🧪 R&D Lab (2.5D)</button>
         </nav>
         <div class="p-4 border-t border-[#163A63] text-xs text-[#91A4B7] text-center">
             <div class="flex items-center justify-center space-x-2">
                 <div class="w-2 h-2 bg-[#27AE60] rounded-full animate-pulse"></div>
                 <span>Sistema Operativo</span>
             </div>
-            <p class="mt-2">stratOS v2.7</p>
+            <p class="mt-2">stratOS v3.0</p>
         </div>
     </aside>
 
     <main class="flex-1 overflow-y-auto p-8 relative">
         
-        <!-- SECCIONES 1-4 (Mantenidas igual) -->
+        <!-- SECCIÓN 1: RESUMEN -->
         <section id="section-resumen" class="block">
             <header class="flex justify-between items-center mb-6">
                 <div><h2 class="text-2xl font-semibold text-white">Command Center</h2><p class="text-sm text-[#91A4B7]">Estado general y métricas institucionales.</p></div>
                 <div class="bg-[#0B1F38] border border-[#163A63] px-4 py-2 rounded-lg text-sm"><span class="text-[#91A4B7]">Actualizado:</span><span id="last-update" class="text-white ml-2">Cargando...</span></div>
             </header>
+
+            <!-- KPIs Principales -->
             <div class="grid grid-cols-1 md:grid-cols-4 gap-4 mb-4">
                 <div class="bg-[#0B1F38] border border-[#163A63] p-4 rounded-xl shadow-lg"><p class="text-[#91A4B7] text-xs mb-1 uppercase">Balance Total</p><h3 class="text-2xl font-bold text-white" id="kpi-balance">$0.00</h3></div>
                 <div class="bg-[#0B1F38] border border-[#163A63] p-4 rounded-xl shadow-lg"><p class="text-[#91A4B7] text-xs mb-1 uppercase">PnL Total</p><h3 class="text-2xl font-bold text-[#27AE60]" id="kpi-pnl">$0.00</h3></div>
                 <div class="bg-[#0B1F38] border border-[#163A63] p-4 rounded-xl shadow-lg"><p class="text-[#91A4B7] text-xs mb-1 uppercase">Win Rate</p><h3 class="text-2xl font-bold text-white" id="kpi-winrate">0.00%</h3></div>
                 <div class="bg-[#0B1F38] border border-[#163A63] p-4 rounded-xl shadow-lg"><p class="text-[#91A4B7] text-xs mb-1 uppercase">Profit Factor</p><h3 class="text-2xl font-bold text-white" id="kpi-pf">0.00</h3></div>
             </div>
+
+            <!-- KPIs Cuantitativos -->
             <div class="grid grid-cols-1 md:grid-cols-4 gap-4 mb-6">
-                <div class="bg-[#0B1F38] border border-[#163A63] p-4 rounded-xl shadow-lg border-l-4 border-l-[#2F80ED]"><p class="text-[#91A4B7] text-xs mb-1 uppercase">Sharpe</p><h3 class="text-xl font-bold text-white" id="kpi-sharpe">0.00</h3></div>
-                <div class="bg-[#0B1F38] border border-[#163A63] p-4 rounded-xl shadow-lg border-l-4 border-l-[#56CCF2]"><p class="text-[#91A4B7] text-xs mb-1 uppercase">Sortino</p><h3 class="text-xl font-bold text-white" id="kpi-sortino">0.00</h3></div>
+                <div class="bg-[#0B1F38] border border-[#163A63] p-4 rounded-xl shadow-lg border-l-4 border-l-[#2F80ED]"><p class="text-[#91A4B7] text-xs mb-1 uppercase">Sharpe Ratio</p><h3 class="text-xl font-bold text-white" id="kpi-sharpe">0.00</h3></div>
+                <div class="bg-[#0B1F38] border border-[#163A63] p-4 rounded-xl shadow-lg border-l-4 border-l-[#56CCF2]"><p class="text-[#91A4B7] text-xs mb-1 uppercase">Sortino Ratio</p><h3 class="text-xl font-bold text-white" id="kpi-sortino">0.00</h3></div>
                 <div class="bg-[#0B1F38] border border-[#163A63] p-4 rounded-xl shadow-lg border-l-4 border-l-[#27AE60]"><p class="text-[#91A4B7] text-xs mb-1 uppercase">Expectancy</p><h3 class="text-xl font-bold text-white" id="kpi-expectancy">$0.00</h3></div>
                 <div class="bg-[#0B1F38] border border-[#163A63] p-4 rounded-xl shadow-lg border-l-4 border-l-[#F2C94C]"><p class="text-[#91A4B7] text-xs mb-1 uppercase">Reserva 20%</p><h3 class="text-xl font-bold text-[#F2C94C]" id="kpi-reserva">$0.00</h3></div>
             </div>
+
+            <!-- Gráficos y Estado -->
             <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
                 <div class="md:col-span-2 bg-[#0B1F38] border border-[#163A63] p-5 rounded-xl shadow-lg"><h3 class="text-white font-semibold mb-4 text-sm">Evolución del Balance</h3><div id="chart-equity" class="w-full h-64"></div></div>
-                <div class="bg-[#0B1F38] border border-[#163A63] p-5 rounded-xl shadow-lg flex flex-col"><h3 class="text-white font-semibold mb-4 text-sm">Estado de los Bots</h3><div class="space-y-3 flex-1 overflow-y-auto" id="bot-list-short"></div></div>
+                <div class="bg-[#0B1F38] border border-[#163A63] p-5 rounded-xl shadow-lg flex flex-col"><h3 class="text-white font-semibold mb-4 text-sm">Estado de los Bots</h3><div class="space-y-3 flex-1 overflow-y-auto" id="bot-list-short"><p class="text-xs text-[#91A4B7]">Cargando bots...</p></div></div>
             </div>
         </section>
 
-        <section id="section-bots" class="hidden"><h2 class="text-2xl font-semibold text-white mb-6">Bot Intelligence</h2><div id="bots-grid" class="grid grid-cols-1 md:grid-cols-2 gap-6"></div></section>
-        
+        <!-- SECCIÓN 2: OPERACIONES -->
         <section id="section-operaciones" class="hidden">
-            <h2 class="text-2xl font-semibold text-white mb-6">Operaciones</h2>
-            <div class="bg-[#0B1F38] border border-[#163A63] rounded-xl overflow-hidden">
-                <table class="w-full text-left text-sm text-[#91A4B7]"><thead class="bg-[#163A63] text-white uppercase text-xs"><tr><th class="px-6 py-3">Fecha</th><th class="px-6 py-3">Bot</th><th class="px-6 py-3">PnL</th></tr></thead><tbody id="trades-tbody"></tbody></table>
+            <header class="mb-6"><h2 class="text-2xl font-semibold text-white">Historial de Operaciones</h2><p class="text-sm text-[#91A4B7]">Registro de trades ejecutados por el motor.</p></header>
+            <div class="bg-[#0B1F38] border border-[#163A63] rounded-xl overflow-hidden shadow-lg">
+                <table class="w-full text-left text-sm text-[#91A4B7]">
+                    <thead class="bg-[#163A63] text-white uppercase font-semibold text-xs">
+                        <tr>
+                            <th class="px-6 py-3">Fecha</th>
+                            <th class="px-6 py-3">Bot</th>
+                            <th class="px-6 py-3">Símbolo</th>
+                            <th class="px-6 py-3">Acción</th>
+                            <th class="px-6 py-3">PnL</th>
+                            <th class="px-6 py-3">Estado</th>
+                        </tr>
+                    </thead>
+                    <tbody id="trades-tbody"></tbody>
+                </table>
             </div>
         </section>
 
-        <section id="section-riesgo" class="hidden"><h2 class="text-2xl font-semibold text-white mb-6">Risk Monitor</h2><div class="bg-[#0B1F38] border border-[#163A63] p-5 rounded-xl shadow-lg"><div id="chart-risk" class="w-full h-64"></div></div></section>
-
-        <!-- SECCIÓN 5: R&D LAB (OFICINA 2.5D Y CONSOLA) -->
-        <section id="section-boardroom" class="hidden">
-            <header class="mb-4 flex justify-between items-center">
-                <div><h2 class="text-2xl font-semibold text-white">R&D Boardroom (Oficina 2.5D)</h2><p class="text-sm text-[#91A4B7]">Visualización en vivo de los agentes.</p></div>
-                <div class="flex gap-2">
-                    <input id="agent-order" type="text" placeholder="Ej: Investigar Momentum en SOL" class="w-64 bg-[#0B1F38] border border-[#163A63] rounded-lg px-4 py-2 text-white focus:outline-none">
-                    <button onclick="runAgents()" id="btn-agent-run" class="bg-[#2F80ED] hover:bg-[#56CCF2] text-white px-6 py-2 rounded-lg font-bold transition">Ejecutar Enjambre</button>
-                </div>
-            </header>
-
-            <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
-                <!-- Panel Izquierdo: La Oficina 2.5D -->
-                <div class="md:col-span-2 bg-[#0B1F38] border border-[#163A63] p-4 rounded-xl shadow-lg">
-                    <div id="game-container"></div>
-                </div>
-                
-                <!-- Panel Derecho: La Consola de Código -->
-                <div class="bg-[#0B1F38] border border-[#163A63] p-4 rounded-xl shadow-lg flex flex-col">
-                    <h3 class="text-[#56CCF2] font-bold text-sm mb-2">💻 Output del Developer Agent</h3>
-                    <pre id="code-output" class="code-console flex-1">Esperando instrucciones...</pre>
-                </div>
-            </div>
-        </section>
     </main>
 
     <script>
-        // --- LOGICA DE NAVEGACIÓN ---
         function showSection(sectionId, btn) {
             document.querySelectorAll('main > section').forEach(sec => sec.classList.add('hidden'));
             document.getElementById('section-' + sectionId).classList.remove('hidden');
@@ -111,128 +92,31 @@
             btn.classList.add('bg-[#163A63]', 'text-[#56CCF2]', 'font-semibold');
         }
 
-        // --- LOGICA DE TRADING (MANTENIDA) ---
         window.onload = function() {
             fetch('/api/metrics').then(res=>res.json()).then(data => {
                 const set = (id, txt) => { const el = document.getElementById(id); if(el) el.innerText = txt; };
                 set('kpi-balance', `$${data.balance.toLocaleString()}`); set('kpi-pnl', `$${data.pnl.toLocaleString()}`); set('kpi-winrate', `${data.win_rate}%`); set('kpi-pf', data.profit_factor); set('kpi-sharpe', data.sharpe); set('kpi-sortino', data.sortino); set('kpi-expectancy', `$${data.expectancy}`); set('kpi-reserva', `$${data.reserva}`); set('last-update', data.last_update);
-                const layout = { paper_bgcolor: 'rgba(0,0,0,0)', plot_bgcolor: 'rgba(0,0,0,0)', font: { color: '#91A4B7' }, margin: { t: 20, b: 30, l: 40, r: 20 }, xaxis: { gridcolor: '#163A63' }, yaxis: { gridcolor: '#163A63' } };
-                if(document.getElementById('chart-equity')) Plotly.newPlot('chart-equity', [{ x: data.dates, y: data.equity, type: 'scatter', mode: 'lines+area', fill: 'tozeroy', linecolor: '#2F80ED' }], layout, {displayModeBar: false});
+                
+                const layout = { paper_bgcolor: 'rgba(0,0,0,0)', plot_bgcolor: 'rgba(0,0,0,0)', font: { color: '#91A4B7', family: 'Inter' }, margin: { t: 20, b: 30, l: 40, r: 20 }, xaxis: { gridcolor: '#163A63' }, yaxis: { gridcolor: '#163A63' } };
+                if(document.getElementById('chart-equity')) Plotly.newPlot('chart-equity', [{ x: data.dates, y: data.equity, type: 'scatter', mode: 'lines+area', fill: 'tozeroy', line: { color: '#2F80ED', width: 2 }, fillcolor: 'rgba(47, 128, 237, 0.1)' }], layout, {displayModeBar: false});
+
+                const botList = document.getElementById('bot-list-short');
+                if(botList) {
+                    botList.innerHTML = '';
+                    data.bots.forEach(bot => { botList.innerHTML += `<div class="flex justify-between items-center bg-[#071426] p-2 rounded-lg border border-[#163A63]"><div><p class="text-white text-xs font-semibold">${bot.name}</p><p class="text-[10px] text-[#27AE60]">● ${bot.status}</p></div><p class="text-white font-mono text-xs">$${bot.pnl}</p></div>`; });
+                }
             });
+
             fetch('/api/trades').then(res=>res.json()).then(data => {
                 const tbody = document.getElementById('trades-tbody');
                 if(!tbody) return;
-                if(data.data.length === 0) { tbody.innerHTML = '<tr><td colspan="3" class="text-center py-4">Sin trades aún</td></tr>'; return; }
-                data.data.forEach(t => { tbody.innerHTML += `<tr class="border-b border-[#163A63]"><td class="px-6 py-4">${t.timestamp}</td><td class="px-6 py-4 text-white">${t.bot_id}</td><td class="px-6 py-4">$${t.pnl_neto}</td></tr>`; });
+                if(data.data.length === 0) { tbody.innerHTML = '<tr><td colspan="6" class="px-6 py-8 text-center text-[#91A4B7]">No hay operaciones registradas aún.</td></tr>'; return; }
+                data.data.forEach(t => {
+                    const color = t.pnl_neto >= 0 ? 'text-[#27AE60]' : 'text-[#EB5757]';
+                    const bg = t.estado === 'ABIERTO' ? 'bg-[#2F80ED]' : 'bg-[#163A63]';
+                    tbody.innerHTML += `<tr class="border-b border-[#163A63] hover:bg-[#071426]"><td class="px-6 py-4">${t.timestamp}</td><td class="px-6 py-4 text-white">${t.bot_id}</td><td class="px-6 py-4">${t.simbolo}</td><td class="px-6 py-4 font-bold ${t.accion === 'LONG' ? 'text-[#27AE60]' : 'text-[#EB5757]'}">${t.accion}</td><td class="px-6 py-4 font-mono ${color}">$${t.pnl_neto}</td><td class="px-6 py-4"><span class="${bg} px-2 py-1 rounded text-xs text-white">${t.estado}</span></td></tr>`;
+                });
             });
-        }
-
-        // --- LOGICA DEL BOARDROOM (AGENTES Y PHASER) ---
-        let gameScene;
-        
-        // Configuración de Phaser (La Oficina)
-        const config = {
-            type: Phaser.AUTO,
-            width: 800,
-            height: 450,
-            parent: 'game-container',
-            backgroundColor: '#0B1F38',
-            scene: {
-                create: create,
-                update: update
-            }
-        };
-        
-        const game = new Phaser.Game(config);
-        
-        function create() {
-            gameScene = this;
-            // Dibujar la habitación (Suelo isométrico simple)
-            const graphics = this.add.graphics();
-            graphics.fillStyle(0x163A63, 1);
-            // Piso
-            graphics.fillRect(100, 100, 600, 300);
-            
-            // Crear 5 "Agentes" (Rectángulos con texto por ahora, simulando escritorios)
-            const agentPositions = [
-                { x: 200, y: 200, name: "Invest.", color: 0x56CCF2 },
-                { x: 350, y: 200, name: "Sinte.", color: 0x2F80ED },
-                { x: 500, y: 200, name: "Devel.", color: 0x27AE60 },
-                { x: 275, y: 300, name: "Audit.", color: 0xEB5757 },
-                { x: 425, y: 300, name: "Telem.", color: 0xF2C94C }
-            ];
-
-            agentPositions.forEach(agent => {
-                // Escritorio
-                this.add.rectangle(agent.x, agent.y, 80, 50, 0x071426).setStrokeStyle(2, 0x163A63);
-                // El "Robot" (Un círculo que representa al agente)
-                const bot = this.add.circle(agent.x, agent.y - 20, 15, agent.color);
-                bot.setData('status', 'idle');
-                
-                // Nombre
-                this.add.text(agent.x - 25, agent.y + 30, agent.name, { fontSize: '10px', color: '#91A4B7' });
-            });
-        }
-
-        function update() {
-            // Animación de tecleo simple (los bots suben y bajan si están trabajando)
-            gameScene.children.list.forEach(child => {
-                if (child.type === 'Arc') {
-                    if (child.getData('status') === 'working') {
-                        child.y += Math.sin(gameScene.time.now / 100) * 0.5;
-                    }
-                }
-            });
-        }
-
-        // Función para actualizar los estados visuales y el código
-        async function runAgents() {
-            const btn = document.getElementById('btn-agent-run');
-            const order = document.getElementById('agent-order').value || "Investigar patron de volumen";
-            btn.innerText = "Procesando...";
-            btn.disabled = true;
-            document.getElementById('code-output').innerText = "Los agentes están colaborando...";
-
-            await fetch('/api/agents/run', { method: 'POST', headers: {'Content-Type': 'application/json'}, body: JSON.stringify({ prompt: order }) });
-
-            const interval = setInterval(async () => {
-                const res = await fetch('/api/agents/status');
-                const data = await res.json();
-                
-                // Actualizar la consola de código (usando la salida del Developer)
-                if (data.developer && data.developer.log) {
-                    document.getElementById('code-output').innerText = data.developer.log;
-                }
-
-                // Actualizar Phaser visualmente (marcar quién está trabajando)
-                if (gameScene) {
-                    const circles = gameScene.children.list.filter(c => c.type === 'Arc');
-                    // Asignación visual: 0=Invest, 1=Sinte, 2=Devel, 3=Audit, 4=Telem
-                    const statuses = [
-                        data.investigador.status,
-                        data.sintetizador.status,
-                        data.developer.status,
-                        data.auditor.status,
-                        data.telemetria.status
-                    ];
-                    
-                    circles.forEach((circle, index) => {
-                        if (statuses[index] === "Working") {
-                            circle.setData('status', 'working');
-                            circle.fillColor = 0xFFD700; // Amarillo cuando trabajan
-                        } else {
-                            circle.setData('status', 'idle');
-                            circle.fillColor = 0x56CCF2; // Cian cuando están idle
-                        }
-                    });
-                }
-
-                if (data.telemetria.log.includes("Mision cumplida")) {
-                    clearInterval(interval);
-                    btn.innerText = "✅ Completado";
-                    btn.classList.replace('bg-[#2F80ED]', 'bg-[#27AE60]');
-                }
-            }, 1000);
         }
     </script>
 </body>
